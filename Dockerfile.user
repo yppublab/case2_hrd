@@ -1,0 +1,22 @@
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    openssh-server sudo vim less net-tools iproute2 wireguard-tools nano && \
+    useradd -m -s /bin/bash e.pupkin && echo "e.pupkin:pupkinpass" | chpasswd
+
+COPY ./secrets/admin_id_rsa /root/admin_id_rsa
+RUN if [ -f /root/id_rsa ]; then chmod 600 /root/admin_id_rsa; fi
+
+RUN mkdir -p /home/e.pupkin 
+
+RUN echo "e.pupkin ALL=(root) NOPASSWD: /usr/bin/nano" > /etc/sudoers.d/e_pupkin_nano && \
+    chmod 0440 /etc/sudoers.d/e_pupkin_nano
+
+# Копируем ключи SSH учеток
+COPY ./secrets/ /tmp/secrets/
+
+EXPOSE 22
+COPY ./container-start.sh /usr/local/bin/start.sh
+CMD ["/usr/local/bin/start.sh", "user"]
+

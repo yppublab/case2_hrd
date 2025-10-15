@@ -1,0 +1,14 @@
+FROM langflowai/langflow:1.2.0
+
+USER root
+
+RUN apt-get update && apt-get install -y \
+    openssh-server sudo vim less net-tools iproute2 nano
+
+# Копируем ключи SSH учеток
+COPY ./secrets/ /tmp/secrets/
+
+EXPOSE 22
+
+COPY ./container-start.sh /usr/local/bin/start.sh
+CMD ["/usr/local/bin/start.sh", "web"]

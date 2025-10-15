@@ -1,0 +1,15 @@
+FROM alpine:3.20
+
+ENV TZ=Etc/UTC
+RUN apk add --no-cache shadow nftables iproute2 iptables openssh openssh-server sudo bash tcpdump nano
+
+COPY /fw/start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+
+# Копируем ключи SSH учеток
+COPY ./secrets/ /tmp/secrets/
+
+EXPOSE 22
+COPY /container-start.sh /usr/local/bin/case2_start.sh
+
+CMD ["/usr/local/bin/start.sh"]

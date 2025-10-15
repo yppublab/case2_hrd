@@ -1,0 +1,17 @@
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y openssh-client openssh-server sudo vim nano net-tools
+
+RUN mkdir -p /guides && \
+    install -m 600 -o root -g root -D /dev/null /guides/smb_note.txt && \
+    echo "smb://fileserver.internal/HR_share. Note: Someday I should close smb guest access, but not now.." > /guides/smb_note.txt && \
+    chmod 600 /guides/smb_note.txt && chown root:root /guides/smb_note.txt
+
+
+# Копируем ключи SSH учеток
+COPY ./secrets/ /tmp/secrets/
+
+EXPOSE 22
+COPY ./container-start.sh /usr/local/bin/start.sh
+CMD ["/usr/local/bin/start.sh", "admin"]
+

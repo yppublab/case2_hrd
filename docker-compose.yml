@@ -1,0 +1,177 @@
+version: '3.8'
+
+networks:
+  ext_net:
+    driver: bridge
+  users_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.1.0/24
+  admin_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.2.0/24
+  dmz_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.0.0/24
+  servers_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.4.0/24
+  
+volumes:
+  web_data:
+
+services:
+
+  fw:
+    hostname: fw
+    depends_on:
+      - wg-server
+    build: 
+      context: ./
+      dockerfile: Dockerfile.fw 
+    environment:
+      - ADMIN_NAME=${ADMIN_NAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - AUDITOR_NAME=${AUDITOR_NAME}
+      - AUDITOR_PASSWORD=${AUDITOR_PASSWORD}     
+    container_name: fw
+    privileged: true
+    cap_add: [ "NET_ADMIN" ]
+    restart: unless-stopped
+    sysctls:
+      net.ipv4.ip_forward: 1    
+    networks:
+      admin_net:
+        ipv4_address: 172.31.2.254
+      users_net:
+        ipv4_address: 172.31.1.254
+      dmz_net:
+        ipv4_address: 172.31.0.254
+      servers_net:
+        ipv4_address: 172.31.4.254
+    volumes:
+      - ./fw/nftables.conf:/etc/nftables.conf:rw
+      - ./fw/etc/resolv.conf:/etc/resolv.conf:ro
+
+  web:
+    depends_on:
+      - fw
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    environment:
+      - ADMIN_NAME=${ADMIN_NAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - AUDITOR_NAME=${AUDITOR_NAME}
+      - AUDITOR_PASSWORD=${AUDITOR_PASSWORD} 
+      - GATEWAY_IP=172.31.4.254
+    container_name: lab_web
+    cap_add: [ "NET_ADMIN" ]
+    networks:
+      servers_net:
+        ipv4_address: 172.31.4.44    
+    ports:
+      - "127.0.0.1:7860:7860"
+    restart: unless-stopped
+    volumes:
+      - ./secrets/wg.conf:/opt/webdata/wg.conf:ro
+      - ./secrets/nothing.txt:/opt/webdata/nothing.txt:ro
+      - web_data:/opt/webdata
+      - ./secrets/auditor_id_rsa.pub:/home/auditor/.ssh/authorized_keys/auditor_id_rsa.pub:rw
+
+  wg-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.wg-server
+    container_name: lab_wg_server
+    privileged: true
+    cap_add: [ "NET_ADMIN", "SYS_MODULE" ]
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - ADMIN_NAME=${ADMIN_NAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - AUDITOR_NAME=${AUDITOR_NAME}
+      - AUDITOR_PASSWORD=${AUDITOR_PASSWORD}
+
+    volumes:
+      - ./wg-server/config:/config
+      - ./secrets/auditor_id_rsa.pub:/home/auditor/.ssh/authorized_keys/auditor_id_rsa.pub:rw
+    ports:
+      - "127.0.0.1:51820:51820/udp"
+    # ВАЖНО: сначала внутренняя сеть (eth0 внутри контейнера), потом внешняя
+    networks:
+      dmz_net:
+        ipv4_address: 172.31.0.12
+      ext_net: {}
+    restart: unless-stopped
+
+  user_pc:
+    depends_on:
+      - fw  
+    build:
+      context: .
+      dockerfile: Dockerfile.user   
+    container_name: lab_pc
+    hostname: user_pc
+    environment:
+      - ADMIN_NAME=${ADMIN_NAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - AUDITOR_NAME=${AUDITOR_NAME}
+      - AUDITOR_PASSWORD=${AUDITOR_PASSWORD} 
+      - GATEWAY_IP=172.31.1.254       
+    networks: 
+      users_net:
+       ipv4_address: 172.31.1.21
+    cap_add: [ "NET_ADMIN" ]
+    volumes:
+      - ./secrets/auditor_id_rsa.pub:/home/auditor/.ssh/authorized_keys/auditor_id_rsa.pub:rw
+    tty: true
+
+  admin_pc:
+    depends_on:
+      - fw  
+    build:
+      context: .
+      dockerfile: Dockerfile.admin      
+    container_name: lab_admin
+    hostname: admin_pc
+    environment:
+      - ADMIN_NAME=${ADMIN_NAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - AUDITOR_NAME=${AUDITOR_NAME}
+      - AUDITOR_PASSWORD=${AUDITOR_PASSWORD}
+      - GATEWAY_IP=172.31.2.254
+    cap_add: [ "NET_ADMIN" ]
+    networks: 
+      admin_net:
+       ipv4_address: 172.31.2.33    
+    tty: true
+
+  fileserver:
+    depends_on:
+      - fw  
+    build:
+      context: .
+      dockerfile: Dockerfile.fileserver
+    container_name: lab_fileserver
+    hostname: fileserver    
+    environment:
+      - ADMIN_NAME=${ADMIN_NAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - AUDITOR_NAME=${AUDITOR_NAME}
+      - AUDITOR_PASSWORD=${AUDITOR_PASSWORD} 
+      - GATEWAY_IP=172.31.4.254    
+    networks: 
+      servers_net:
+       ipv4_address: 172.31.4.5
+    tty: true
+

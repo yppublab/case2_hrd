@@ -1,0 +1,8 @@
+FROM lscr.io/linuxserver/wireguard:latest
+
+# Копируем ключи SSH учеток
+COPY ./secrets/ /tmp/secrets/
+
+EXPOSE 22
+COPY ./container-start.sh /usr/local/bin/start.sh
+CMD ["/usr/local/bin/start.sh", "wg-server"]
