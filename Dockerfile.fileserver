@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y samba openssh-server openssh-client smbclient 
+RUN apt-get update && apt-get install -y samba openssh-server openssh-client smbclient libpam-pwquality
 RUN useradd -m filesvc
 
 RUN mkdir -p /srv/samba/hr && \
@@ -14,4 +14,6 @@ COPY ./secrets/ /tmp/secrets/
 
 EXPOSE 22
 COPY ./container-start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+CMD ["/usr/local/bin/start.sh", "fileserver"]
 CMD ["/usr/local/bin/start.sh", "fileserver"]

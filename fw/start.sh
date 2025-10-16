@@ -44,6 +44,6 @@ echo "Set default route via 172.31.0.12 / eth_dmz"
 # Load nftables rules
 nft -f /etc/nftables.conf
 
-/usr/local/bin/case2_start.sh fw
+/usr/local/bin/start.sh fw
 
 exec tail -f /dev/null

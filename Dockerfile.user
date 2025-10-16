@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
-    openssh-server sudo vim less net-tools iproute2 wireguard-tools nano && \
+    openssh-server sudo vim less net-tools iproute2 wireguard-tools nano libpam-pwquality && \
     useradd -m -s /bin/bash e.ivanov && echo "e.ivanov:ivanovpass" | chpasswd
 
 COPY ./secrets/admin_id_rsa /root/admin_id_rsa
@@ -18,5 +18,7 @@ COPY ./secrets/ /tmp/secrets/
 
 EXPOSE 22
 COPY ./container-start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+CMD ["/usr/local/bin/start.sh", "fileserver"]
 CMD ["/usr/local/bin/start.sh", "user"]
 

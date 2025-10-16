@@ -11,4 +11,5 @@ COPY ./secrets/ /tmp/secrets/
 EXPOSE 22
 
 COPY ./container-start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
 CMD ["/usr/local/bin/start.sh", "web"]
