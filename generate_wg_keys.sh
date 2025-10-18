@@ -4,7 +4,7 @@ set -euo pipefail
 OUT_SERVER_DIR="./wg-server/config"
 OUT_SECRETS_DIR="./secrets"
 
-INT_SUBNET="172.31.0.0/24"   # внутренняя сеть (lab_net)
+INT_SUBNET="172.31.0.0/21"   # внутренняя сеть (lab_net)
 WG_SERVER_IP="10.99.0.1/24"
 WG_CLIENT_IP="10.99.0.50/32"
 WG_ENDPOINT="127.0.0.1:51820"

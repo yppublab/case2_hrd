@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 set -e
 CMD="${1:-}"
@@ -44,9 +45,9 @@ case "$CMD" in
 
     # Firewall хоста: трафик к 172.31.0.0/24 — только через wg0
     # разрешаем выход на внутреннюю сеть через wg0
-    add_rule_if_missing filter OUTPUT -o wg0 -d 172.31.0.0/24 -j ACCEPT
+    add_rule_if_missing filter OUTPUT -d 172.31.2.33/32 -j ACCEPT
     # всё остальное к 172.31.0.0/24 — запрещаем
-    add_rule_if_missing filter OUTPUT -d 172.31.0.0/24 -j REJECT
+    add_rule_if_missing filter OUTPUT -d 172.31.0.0/21 -j REJECT
 
     docker compose ps
     echo
@@ -59,8 +60,8 @@ case "$CMD" in
     docker compose down -v
 
     # Снимаем наши правила
-    del_rule_if_exists filter OUTPUT -d 172.31.0.0/24 -j REJECT
-    del_rule_if_exists filter OUTPUT -o wg0 -d 172.31.0.0/24 -j ACCEPT
+    del_rule_if_exists filter OUTPUT -d 172.31.0.0/21 -j REJECT
+    del_rule_if_exists filter OUTPUT -d 172.31.2.33/32 -j ACCEPT
     ;;
 
   logs)
