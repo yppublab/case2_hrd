@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y openssh-client openssh-server sudo vim nano net-tools iputils-ping libpam-pwquality
+RUN apt-get update && apt-get install -y openssh-client openssh-server sudo vim nano samba-client net-tools iputils-ping libpam-pwquality
 RUN mkdir -p /guides && \
     install -m 600 -o root -g root -D /dev/null /guides/smb_note.txt && \
     echo "smb://fileserver.internal/HR_share. Note: Someday I should close smb guest access, but not now.." > /guides/smb_note.txt && \
