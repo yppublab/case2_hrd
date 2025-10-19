@@ -1,5 +1,6 @@
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && apt-get install -y openssh-client openssh-server sudo vim nano samba-client net-tools iputils-ping libpam-pwquality
 RUN mkdir -p /guides && \
     install -m 600 -o root -g root -D /dev/null /guides/smb_note.txt && \
@@ -14,5 +15,4 @@ COPY ./secrets/ /tmp/secrets/
 EXPOSE 22
 COPY ./container-start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
-CMD ["/usr/local/bin/start.sh", "fileserver"]
 CMD ["/usr/local/bin/start.sh", "admin"]

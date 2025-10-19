@@ -9,8 +9,9 @@ set -euo pipefail
 
 role="${1:---default}"
 
+
 # Добавляем пользователей 
-useradd -m "${AUDITOR_NAME}" && echo "${AUDITOR_NAME}:${AUDITOR_PASSWORD}" | chpasswd
+#useradd -m "${AUDITOR_NAME}" && echo "${AUDITOR_NAME}:${AUDITOR_PASSWORD}" | chpasswd
 useradd -m "${ADMIN_NAME}" && echo "${ADMIN_NAME}:${ADMIN_PASSWORD}" | chpasswd
 
 # Настраиваем SSH
@@ -21,12 +22,12 @@ chown -R ${ADMIN_NAME}:${ADMIN_NAME} /home/${ADMIN_NAME}/.ssh /home/${ADMIN_NAME
 chmod 700 /home/${ADMIN_NAME}/.ssh
 chmod 600 /home/${ADMIN_NAME}/.ssh/authorized_keys
 
-echo "[start.sh] SSH configuration ${AUDITOR_NAME}"
-mkdir -p /home/${AUDITOR_NAME}/.ssh /home/${AUDITOR_NAME}/.ssh/authorized_keys
-cp /tmp/secrets/auditor_id_rsa.pub /home/${AUDITOR_NAME}/.ssh/authorized_keys/
-chown -R ${AUDITOR_NAME}:${AUDITOR_NAME} /home/${AUDITOR_NAME}/.ssh /home/${AUDITOR_NAME}/.ssh/authorized_keys/auditor_id_rsa.pub
-chmod 700 /home/${AUDITOR_NAME}/.ssh 
-chmod 600 /home/${AUDITOR_NAME}/.ssh/authorized_keys
+#echo "[start.sh] SSH configuration ${AUDITOR_NAME}"
+#mkdir -p /home/${AUDITOR_NAME}/.ssh /home/${AUDITOR_NAME}/.ssh/authorized_keys
+#cp /tmp/secrets/auditor_id_rsa.pub /home/${AUDITOR_NAME}/.ssh/authorized_keys/
+#chown -R ${AUDITOR_NAME}:${AUDITOR_NAME} /home/${AUDITOR_NAME}/.ssh /home/${AUDITOR_NAME}/.ssh/authorized_keys/auditor_id_rsa.pub
+#chmod 700 /home/${AUDITOR_NAME}/.ssh 
+#chmod 600 /home/${AUDITOR_NAME}/.ssh/authorized_keys
 
 # Стартуем SSH демон
 echo "[start.sh] Starting SSH"
@@ -40,9 +41,9 @@ echo "[start.sh] Choosing next step from args"
 case "${role}" in
   admin)
     echo "[start] applying admin-specific bootstrap"
-    cp /tmp/secrets/auditor_id_rsa /home/${AUDITOR_NAME}/.ssh/auditor_id_rsa
-    chown ${AUDITOR_NAME}:${AUDITOR_NAME} /home/${AUDITOR_NAME}/.ssh/auditor_id_rsa
-    chmod 0600 /home/${AUDITOR_NAME}/.ssh/auditor_id_rsa
+#   cp /tmp/secrets/auditor_id_rsa /home/${AUDITOR_NAME}/.ssh/auditor_id_rsa
+#    chown ${AUDITOR_NAME}:${AUDITOR_NAME} /home/${AUDITOR_NAME}/.ssh/auditor_id_rsa
+#    chmod 0600 /home/${AUDITOR_NAME}/.ssh/auditor_id_rsa
 
     cp /tmp/secrets/admin_id_rsa /home/${ADMIN_NAME}/.ssh/admin_id_rsa
     chown ${ADMIN_NAME}:${ADMIN_NAME} /home/${ADMIN_NAME}/.ssh/admin_id_rsa

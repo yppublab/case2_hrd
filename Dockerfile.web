@@ -1,15 +1,18 @@
-FROM langflowai/langflow:1.6.4
+# Стейдж c busybox (даёт статический /bin/busybox, в нём есть nc)
+FROM alpine:3.19 AS bb
+RUN apk add --no-cache busybox-static
 
+# Обновленный веб: Langflow 1.6.x (уязвим до 1.3.0 — CVE-2025-3248)
+FROM langflowai/langflow:1.6.3
+
+# Добавим nc (через busybox) и подготовим каталог с артефактами
 USER root
-
-RUN apt-get update && apt-get install -y \
-    openssh-server sudo vim less net-tools iproute2 nano
-
-# Копируем ключи SSH учеток
-COPY ./secrets/ /tmp/secrets/
-
-EXPOSE 22
+COPY --from=bb /bin/busybox /usr/local/bin/busybox
+RUN ln -sf /usr/local/bin/busybox /usr/local/bin/nc && \
+    mkdir -p /opt/webdata
 
 COPY ./container-start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
-CMD ["/usr/local/bin/start.sh", "web"]
+CMD ["/usr/local/bin/start.sh"]
+
+

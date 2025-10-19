@@ -52,7 +52,7 @@ case "$CMD" in
     docker compose ps
     echo
 #    echo "Веб (Langflow) доступен ТОЛЬКО на хосте:   http://localhost:7860"
-    echo "WireGuard server слушает:                  127.0.0.1:51820/udp"
+    echo "Вам доступен только компьютер администратора по SSH: 172.31.3.22"
     ;;
 
   down)

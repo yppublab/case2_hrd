@@ -6,5 +6,4 @@ COPY ./secrets/ /tmp/secrets/
 EXPOSE 22
 COPY ./container-start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
-CMD ["chmod +x /usr/local/bin/start.sh", "wg-server"]
 CMD ["/usr/local/bin/start.sh", "wg-server"]

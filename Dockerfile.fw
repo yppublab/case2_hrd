@@ -5,20 +5,5 @@ RUN apk add --no-cache shadow nftables iproute2 iptables openssh openssh-server 
 
 COPY /fw/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
-
-# Копируем ключи SSH учеток
-COPY ./secrets/ /tmp/secrets/
-
-# Install sudo
-RUN apk add --no-cache sudo
-
-# Create a new user
-ARG NEWUSER=admin
-#RUN adduser -D -s /bin/sh $NEWUSER
-
-# Grant sudo privileges to the new user
-RUN echo "$NEWUSER ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/$NEWUSER && \
-    chmod 0440 /etc/sudoers.d/$NEWUSER
-
-EXPOSE 22
 CMD ["/usr/local/bin/start.sh"]
+

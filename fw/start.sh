@@ -44,6 +44,30 @@ echo "Set default route via 172.31.0.12 / eth_dmz"
 # Load nftables rules
 nft -f /etc/nftables.conf
 
-#/usr/local/bin/start.sh fw
+#Create user from env
+useradd -m "${FWADMIN_NAME}" && echo "${FWADMIN_NAME}:${FWADMIN_PASSWORD}" | chpasswd
 
-exec tail -f /dev/null
+# SSH setup (avoid noisy errors if config dir missing)
+mkdir -p /etc/ssh /run/sshd
+if [ ! -f /etc/ssh/sshd_config ]; then
+  cat > /etc/ssh/sshd_config <<'EOF'
+Port 22
+Protocol 2
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+PasswordAuthentication yes
+PermitRootLogin no
+UsePAM yes
+Subsystem sftp /usr/lib/openssh/sftp-server
+EOF
+fi
+sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config || true
+sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config || true
+
+mkdir -p /run/sshd
+chmod 755 /run/sshd
+ssh-keygen -A >/dev/null 2>&1 || true
+
+
+exec /usr/sbin/sshd -D

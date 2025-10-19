@@ -37,10 +37,8 @@ services:
       context: ./
       dockerfile: Dockerfile.fw 
     environment:
-      - ADMIN_NAME=${ADMIN_NAME}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - AUDITOR_NAME=${AUDITOR_NAME}
-      - AUDITOR_PASSWORD=${AUDITOR_PASSWORD}     
+      - FWADMIN_NAME=${FWADMIN_NAME}
+      - FWADMIN_PASSWORD=${FWADMIN_PASSWORD}
     container_name: fw
     privileged: true
     cap_add: [ "NET_ADMIN" ]
@@ -70,21 +68,23 @@ services:
       - ADMIN_NAME=${ADMIN_NAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - AUDITOR_NAME=${AUDITOR_NAME}
-      - AUDITOR_PASSWORD=${AUDITOR_PASSWORD} 
+      - AUDITOR_PASSWORD=${AUDITOR_PASSWORD}
       - GATEWAY_IP=172.31.4.254
+    env_file:
+      - .env
     container_name: lab_web
     cap_add: [ "NET_ADMIN" ]
     networks:
-      servers_net:
-        ipv4_address: 172.31.4.44    
+     servers_net:
+       ipv4_address: 172.31.4.44
 #    ports:
 #      - "127.0.0.1:7860:7860"
-    restart: unless-stopped
+    restart: unless-stopped 
     volumes:
       - ./secrets/wg.conf:/opt/webdata/wg.conf:ro
       - ./secrets/nothing.txt:/opt/webdata/nothing.txt:ro
       - web_data:/opt/webdata
-      - ./secrets/auditor_id_rsa.pub:/home/auditor/.ssh/authorized_keys/auditor_id_rsa.pub:rw
+#      - ./secrets/auditor_id_rsa.pub:/home/auditor/.ssh/authorized_keys/auditor_id_rsa.pub:rw
 
   wg-server:
     build:
@@ -129,7 +129,7 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - AUDITOR_NAME=${AUDITOR_NAME}
       - AUDITOR_PASSWORD=${AUDITOR_PASSWORD} 
-      - GATEWAY_IP=172.31.1.254       
+      - GATEWAY_IP=172.31.1.254
     networks: 
       users_net:
        ipv4_address: 172.31.1.21
@@ -172,6 +172,7 @@ services:
       - AUDITOR_NAME=${AUDITOR_NAME}
       - AUDITOR_PASSWORD=${AUDITOR_PASSWORD} 
       - GATEWAY_IP=172.31.4.254    
+    cap_add: [ "NET_ADMIN" ]
     networks: 
       servers_net:
        ipv4_address: 172.31.4.5
