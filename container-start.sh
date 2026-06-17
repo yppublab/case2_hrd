@@ -9,18 +9,35 @@ set -euo pipefail
 
 role="${1:---default}"
 
+ensure_user() {
+    local name="$1"
+    local password="$2"
+
+    if id "$name" >/dev/null 2>&1; then
+        echo "${name}:${password}" | chpasswd
+    else
+        useradd -m "$name" && echo "${name}:${password}" | chpasswd
+    fi
+}
+
+install_authorized_key() {
+    local name="$1"
+    local public_key="$2"
+
+    mkdir -p "/home/${name}/.ssh"
+    cp "$public_key" "/home/${name}/.ssh/authorized_keys"
+    chown -R "${name}:${name}" "/home/${name}/.ssh"
+    chmod 700 "/home/${name}/.ssh"
+    chmod 600 "/home/${name}/.ssh/authorized_keys"
+}
 
 # Добавляем пользователей 
 #useradd -m "${AUDITOR_NAME}" && echo "${AUDITOR_NAME}:${AUDITOR_PASSWORD}" | chpasswd
-useradd -m "${ADMIN_NAME}" && echo "${ADMIN_NAME}:${ADMIN_PASSWORD}" | chpasswd
+ensure_user "${ADMIN_NAME}" "${ADMIN_PASSWORD}"
 
 # Настраиваем SSH
 echo "[start.sh] SSH configuration ${ADMIN_NAME}"
-mkdir -p /home/${ADMIN_NAME}/.ssh /home/${ADMIN_NAME}/.ssh/authorized_keys
-cp /tmp/secrets/admin_id_rsa.pub /home/${ADMIN_NAME}/.ssh/authorized_keys/
-chown -R ${ADMIN_NAME}:${ADMIN_NAME} /home/${ADMIN_NAME}/.ssh /home/${ADMIN_NAME}/.ssh/authorized_keys/admin_id_rsa.pub
-chmod 700 /home/${ADMIN_NAME}/.ssh
-chmod 600 /home/${ADMIN_NAME}/.ssh/authorized_keys
+install_authorized_key "${ADMIN_NAME}" /tmp/secrets/admin_id_rsa.pub
 
 #echo "[start.sh] SSH configuration ${AUDITOR_NAME}"
 #mkdir -p /home/${AUDITOR_NAME}/.ssh /home/${AUDITOR_NAME}/.ssh/authorized_keys
@@ -59,19 +76,21 @@ case "${role}" in
 esac
 
 # Удаляем временные ключи SSH
-rm -rf /tmp/secrets
+rm -rf /tmp/secrets 2>/dev/null || true
 
 # Действия по умолчанию: ставим iproute2 и настраиваем маршрут через FW
 # Для WG сервер и FW маршруты настраиваются отдельно
 echo "[start] Default route configuration (except wg-server & fw)"
 if [[ ${role} != "wg-server" && ${role} != "fw" ]]; then
     # Устанавливаем пакет iproute2 (для ubuntu/alpine)
-    if command -v apt-get >/dev/null 2>&1; then
-        apt-get install -y iproute2
-    elif command -v apk >/dev/null 2>&1; then
-        apk add --no-cache iproute2
-    else
-        echo "[start] package manager not found for iproute2" >&2
+    if ! command -v ip >/dev/null 2>&1; then
+        if command -v apt-get >/dev/null 2>&1; then
+            apt-get update && apt-get install -y iproute2
+        elif command -v apk >/dev/null 2>&1; then
+            apk add --no-cache iproute2
+        else
+            echo "[start] package manager not found for iproute2" >&2
+        fi
     fi
     ip route del default || true
     ip route add default via "${GATEWAY_IP}" || true
@@ -81,7 +100,9 @@ fi
 
 if [[ ${role} == "web" ]]; then
     echo "[start] Done starting langflow"
-    langflow run
+    langflow_user="${LANGFLOW_RUN_USER:-user}"
+    install -d -o "${langflow_user}" -g "$(id -gn "${langflow_user}")" /app/data
+    exec runuser -u "${langflow_user}" -- langflow run
 else
     echo "[start] Done"
     exec tail -f /dev/null
