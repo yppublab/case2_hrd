@@ -4,15 +4,21 @@ RUN apk add --no-cache busybox-static
 
 # Обновленный веб: Langflow 1.6.x (уязвим до 1.3.0 — CVE-2025-3248)
 FROM langflowai/langflow:1.6.3
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Добавим nc (через busybox) и подготовим каталог с артефактами
 USER root
 COPY --from=bb /bin/busybox /usr/local/bin/busybox
-RUN ln -sf /usr/local/bin/busybox /usr/local/bin/nc && \
-    mkdir -p /opt/webdata
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends iproute2 openssh-server passwd util-linux && \
+    rm -rf /var/lib/apt/lists/* && \
+    ln -sf /usr/local/bin/busybox /usr/local/bin/nc && \
+    if ! getent group langflow >/dev/null; then groupadd langflow; fi && \
+    usermod -g langflow -G "" -d /app/data -s /bin/bash user && \
+    install -d -o user -g langflow /app/data /opt/webdata
 
 COPY ./container-start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
-CMD ["/usr/local/bin/start.sh"]
 
-
+USER user
+CMD ["langflow", "run"]

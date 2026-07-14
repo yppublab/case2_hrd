@@ -73,6 +73,8 @@ services:
     env_file:
       - .env
     container_name: lab_web
+    user: root
+    command: ["/usr/local/bin/start.sh", "web"]
     cap_add: [ "NET_ADMIN" ]
     networks:
      servers_net:
@@ -81,9 +83,10 @@ services:
 #      - "127.0.0.1:7860:7860"
     restart: unless-stopped 
     volumes:
+      - ./secrets/admin_id_rsa.pub:/tmp/secrets/admin_id_rsa.pub:ro
       - ./secrets/wg.conf:/opt/webdata/wg.conf:ro
       - ./secrets/nothing.txt:/opt/webdata/nothing.txt:ro
-      - web_data:/opt/webdata
+      - web_data:/app/data
 #      - ./secrets/auditor_id_rsa.pub:/home/auditor/.ssh/authorized_keys/auditor_id_rsa.pub:rw
 
   wg-server:
@@ -177,4 +180,3 @@ services:
       servers_net:
        ipv4_address: 172.31.4.5
     tty: true
-
